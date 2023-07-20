@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class MemberMapperClass {
@@ -58,8 +59,8 @@ public class MemberMapperClass {
                 .memberId(member.getMemberId())
                 .email(member.getEmail())
                 .nickname(member.getNickname())
-                .introduction(member.getIntroduction())
                 .image(member.getImageUrl())
+                .introduction(member.getIntroduction())
                 .mySubscriber(member.getSubscribingMembers().size())
                 .myCuration(curationService.getMyCurations(member).size())
                 .memberStatus(member.getMemberStatus())
@@ -71,8 +72,8 @@ public class MemberMapperClass {
                 .memberId(otherMember.getMemberId())
                 .email(otherMember.getEmail())
                 .nickname(otherMember.getNickname())
-                .introduction(otherMember.getIntroduction())
                 .image(otherMember.getImageUrl())
+                .introduction(otherMember.getIntroduction())
                 .mySubscriber(otherMember.getSubscribingMembers().size())
                 .myCuration(curationService.getMyCurations(otherMember).size())
                 .isSubscribed(isSubscribed)
@@ -102,5 +103,21 @@ public class MemberMapperClass {
         }
     }
 
+    public BestCuratorDto memberToBestCuratorDto(Member member) {
+        return BestCuratorDto.builder()
+                .memberId(member.getMemberId())
+                .email(member.getEmail())
+                .nickname(member.getNickname())
+                .introduction(member.getIntroduction())
+                .image(member.getImageUrl())
+                .mySubscriber(member.getSubscribingMembers().size())
+                .build();
+    }
+
+    public List<BestCuratorDto> membersToBestCuratorDtos(List<Member> members) {
+        return members.stream().map(
+                member -> memberToBestCuratorDto(member)
+        ).collect(Collectors.toList());
+    }
 
 }
