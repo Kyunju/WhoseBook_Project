@@ -15,11 +15,12 @@ interface CurationDetailInfoProps {
   setIsLiked: (data: boolean) => void;
   curationLikeCount: number | undefined;
   curatorId: number | undefined;
-  curationId: string | undefined;
+  curationId: number | undefined;
+  category: string | undefined;
 }
 type likeDeleteProps = {
   memberId: number | undefined;
-  curationId: string | undefined;
+  curationId: number | undefined;
 };
 const CurationDetailInfo = ({
   isLiked,
@@ -27,10 +28,12 @@ const CurationDetailInfo = ({
   curationLikeCount,
   curatorId,
   curationId,
+  category,
 }: CurationDetailInfoProps) => {
   const token = localStorage.getItem('Authorization');
   const navigate = useNavigate();
   const { memberId } = useSelector((state: RootState) => state.user);
+
   const handleLike = async () => {
     if (token) {
       const response = await axiosInstance.post(`/curations/${curationId}/like`);
@@ -39,7 +42,7 @@ const CurationDetailInfo = ({
       }
     } else {
       alert('좋아요 기능은 로그인 후에 가능합니다.');
-      navigate('/login');
+      navigate('/login', { state: { from: location.pathname } });
     }
   };
   const handleCancelLike = async () => {
@@ -57,9 +60,9 @@ const CurationDetailInfo = ({
     <DetailInfoContainer>
       <UserInfo>
         <Category>
-          <Button type="category" content="시/에세이" />
+          <Button type="category" content={category} />
         </Category>
-        {memberId !== curatorId && (
+        {memberId !== curatorId ? (
           <>
             {isLiked ? (
               <LikeButton onClick={handleCancelLike}>
@@ -71,6 +74,10 @@ const CurationDetailInfo = ({
               </LikeButton>
             )}
           </>
+        ) : (
+          <LikeButton id="myLike">
+            <AiFillHeart size="2rem" />
+          </LikeButton>
         )}
         좋아요 {curationLikeCount}개
       </UserInfo>

@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import tw from 'twin.macro';
 
 import { images } from '../../utils/importImgUrl';
@@ -13,6 +13,8 @@ import Button from '../../components/buttons/Button';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { from } = location.state || { from: '/' };
   const [formValue, setFormValue] = useState<IUserLoginData>({
     username: '',
     password: '',
@@ -49,7 +51,7 @@ const SignIn = () => {
       };
       const response = await loginAPI(data);
       if (response) {
-        navigate('/');
+        navigate(from);
       }
     }
   };
@@ -114,14 +116,6 @@ const SignIn = () => {
             <GoogleLogoImg src={images.googleIcon} alt="google social login image" />
             <Button onClick={handleGoogleOAuthLogin} content="구글로 로그인하기" color="#371c1d" />
           </SocialItemItemWrap>
-          <SocialItemItemWrap>
-            <KakaoLogoImg src={images.kakaoIcon} alt="kakaotalk social login image" />
-            <Button content="카카오로 로그인하기" color="#371C1D" />
-          </SocialItemItemWrap>
-          <SocialItemItemWrap>
-            <NaverLogoImg src={images.naverIcon} alt="naver social login image" />
-            <Button content="네이버로 로그인하기" color="#fff" />
-          </SocialItemItemWrap>
         </SocialLoginForm>
       </Form>
     </Container>
@@ -152,9 +146,9 @@ const Form = tw.form`
   justify-center
   min-w-min
   w-[33rem]
-  px-2
-  py-14
-  pb-16
+  px-1
+  py-20
+  pb-20
   bg-gray-200
   rounded-xl
   shadow-lg
@@ -198,8 +192,6 @@ const SocialLoginForm = tw.div`
   mt-10
   w-3/5
   [> div]:first:bg-[#fff]
-  [> div]:even:bg-[#FAE100]
-  [> div]:last:bg-[#03C75A]
   [> div]:mb-4
 `;
 
@@ -216,16 +208,6 @@ const GoogleLogoImg = tw.img`
   w-6
   h-6
   `;
-
-const KakaoLogoImg = tw.img`
-  w-7
-  h-6
-`;
-
-const NaverLogoImg = tw.img`
-  w-4
-  h-4
-`;
 
 const Valid = tw.p`
   mt-2
