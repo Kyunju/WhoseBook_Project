@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import tw from 'twin.macro';
 import styled from 'styled-components';
@@ -19,13 +19,14 @@ import {
   deleteSubscribeAPI,
   getMyInfoAPI,
 } from '../../api/profileApi';
+import { RootState } from '../../store/store';
 
 const ProfileInfo = ({ type }: ProfileTypeProps) => {
   const [myInfo, setMyInfo] = useState<MyProps>();
   const [userInfo, setUserInfo] = useState<UserProps>();
   const [isSubscribe, setIsSubscribe] = useState<boolean>();
   const [isModal, setIsModal] = useState<boolean>(false);
-
+  const user = useSelector((state: RootState) => state.user);
   const { memberId } = useParams();
 
   const token = localStorage.getItem('Authorization');
@@ -52,7 +53,6 @@ const ProfileInfo = ({ type }: ProfileTypeProps) => {
         confirmButtonColor: '#d33',
       });
       navigate('/login', { state: { from: location.pathname } });
-      // console.error(err);
     }
   };
 
@@ -91,6 +91,9 @@ const ProfileInfo = ({ type }: ProfileTypeProps) => {
     if (response) {
       setUserInfo(response.data);
       setIsSubscribe(response.data.subscribed);
+      if (userInfo?.memberId === user?.memberId) {
+        navigate('/mypage');
+      }
     }
   };
 
@@ -175,9 +178,6 @@ const ProfileInfoContainer = tw.section`
     flex
     justify-between
     py-10
-    border-b-2
-    border-solid
-    border-gray-300
     gap-[3rem]
 `;
 
@@ -205,6 +205,7 @@ const ProfileImage = tw.div`
 const DefaultImg = styled.img`
   height: inherit;
   object-fit: cover;
+  width: 100%;
 `;
 const Nickname = tw.p`
     text-3xl
