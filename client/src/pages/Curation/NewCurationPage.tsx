@@ -1,6 +1,6 @@
 import ReactPaginate from 'react-paginate';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { styled } from 'styled-components';
 import tw from 'twin.macro';
 
@@ -13,7 +13,7 @@ import Button from '../../components/buttons/Button';
 import Footer from '../../components/Footer/Footer';
 import ClockLoading from '../../components/Loading/ClockLoading';
 import { customAlert } from '../../components/alert/sweetAlert';
-
+import { TitleDiv, AllBtn } from './BestCurationPage';
 const loadingStyle = {
   width: '80vw',
   height: '15vh',
@@ -24,48 +24,67 @@ const loadingStyle = {
 
 const NewCurationPage = () => {
   const navigate = useNavigate();
+  const [searchParmas, setSearchParams] = useSearchParams();
+  const categoryParam = searchParmas.get('category');
+  const pageParm = searchParmas.get('page');
+
   const [newCurations, setNewCurations] = useState<ICurationResponseData[] | null>(null);
-  const [page, setPage] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>((Number(pageParm) - 1) | 0);
   const [totalNewPage, setTotalNewPage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectCategory, setSelectCategory] = useState<number>(0);
+  const [selectCategory, setSelectCategory] = useState<number>(Number(categoryParam) | 0);
 
+  const [isAllBtnActive, setIsAllBtnActive] = useState(true);
   const itemsPerPage = 9;
 
-  const fetchNewCurationData = async () => {
-    setIsLoading(true);
-    const response = await newlyCurationAPI(page + 1, itemsPerPage);
-    if (!response?.data.data.length) {
-      setIsLoading(false);
-    } else {
-      setNewCurations(response.data.data);
-      setTotalNewPage(response.data.pageInfo.totalPages);
-      setIsLoading(false);
+  const handleGetBestCurations = async () => {
+    try {
+      setIsLoading(true);
+      const response =
+        selectCategory === 0
+          ? await newlyCurationAPI(currentPage + 1, itemsPerPage)
+          : await newlyCurationCategoryAPI(currentPage + 1, itemsPerPage, selectCategory);
+      if (response) {
+        setNewCurations(response.data.data);
+        setTotalNewPage(response.data.pageInfo.totalPages);
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const getNewlyCurationsByCategory = async (page: number, categoryId: number) => {
-    const response = await newlyCurationCategoryAPI(page + 1, itemsPerPage, categoryId);
+  const handleAllCategory = () => {
+    setCurrentPage(0);
+    setSelectCategory(0);
+    setIsAllBtnActive(true);
 
-    if (!response?.data.data.length) {
-      setIsLoading(false);
-      setNewCurations(response?.data.data);
+    navigate(`/curation/new?page=${currentPage + 1}&size=${itemsPerPage}`);
+  };
+
+  const handlePageChange = (selectedItem: { selected: number }) => {
+    const selectedPage = selectedItem.selected;
+    setCurrentPage(selectedPage);
+    if (categoryParam) {
+      setSearchParams({
+        category: String(selectCategory),
+        page: String(selectedItem.selected + 1),
+        size: '9',
+      });
     } else {
-      setNewCurations(response.data.data);
-      setTotalNewPage(response.data.pageInfo.totalPages);
-      setIsLoading(false);
+      setSearchParams({
+        page: String(selectedItem.selected + 1),
+        size: '9',
+      });
     }
   };
 
-  const handleTagClick = (categoryId: number) => {
-    setPage(0);
-    getNewlyCurationsByCategory(page, categoryId);
-  };
-  const handlePageChange = (selectedPage: { selected: number }) => {
-    setPage(selectedPage.selected);
-  };
   const handleSetSelectCategory = (selectedValue: number) => {
+    setCurrentPage(0);
+    setIsAllBtnActive(false);
     setSelectCategory(selectedValue);
+
+    navigate(`/curation/new?category=${selectedValue}&page=1&size=9`);
   };
 
   const handleCreateButtonClick = () => {
@@ -88,14 +107,31 @@ const NewCurationPage = () => {
   };
 
   useEffect(() => {
-    fetchNewCurationData();
-  }, [page]);
+    if (categoryParam) {
+      setIsAllBtnActive(false);
+      setSelectCategory(Number(categoryParam));
+    } else {
+      setIsAllBtnActive(true);
+      setSelectCategory(0);
+    }
+    handleGetBestCurations();
+  }, [currentPage, searchParmas]);
+
+  useEffect(() => {
+    setCurrentPage(Number(pageParm) - 1);
+  }, [pageParm]);
 
   return (
     <>
       <Container>
         <TitleContainer>
-          <Label type="title" content="큐레이션 카테고리" />
+          <TitleDiv>
+            <Label type="title" content="큐레이션 카테고리" />
+            <AllBtn onClick={handleAllCategory} isActive={isAllBtnActive}>
+              전체 카테고리 보기
+            </AllBtn>
+          </TitleDiv>
+
           <CreateButton>
             <Button
               type="create"
@@ -105,7 +141,6 @@ const NewCurationPage = () => {
           </CreateButton>
         </TitleContainer>
         <CategoryTag
-          handleTagClick={handleTagClick}
           handleSetSelectCategory={handleSetSelectCategory}
           selectCategory={selectCategory}
         />
@@ -118,16 +153,16 @@ const NewCurationPage = () => {
               <ClockLoading color="#3173f6" style={{ ...loadingStyle }} />
             ) : (
               newCurations?.map((e) => (
-                <Link key={e.curationId} to={`/curations/${e.curationId}`}>
-                  <CurationCard
-                    image={e.curator.image}
-                    emoji={e.emoji}
-                    title={e.title}
-                    content={e.content}
-                    curationLikeCount={e.curationLikeCount}
-                    memberNickname={e.curator.nickname}
-                  />
-                </Link>
+                <CurationCard
+                  key={e.curationId}
+                  curationId={e.curationId}
+                  image={e.curator.image}
+                  emoji={e.emoji}
+                  title={e.title}
+                  content={e.content}
+                  curationLikeCount={e.curationLikeCount}
+                  memberNickname={e.curator.nickname}
+                />
               ))
             )}
             {!isLoading && newCurations && newCurations.length === 0 && (
@@ -140,7 +175,7 @@ const NewCurationPage = () => {
             <ReactPaginate
               pageCount={totalNewPage}
               onPageChange={handlePageChange}
-              forcePage={page}
+              forcePage={currentPage}
               containerClassName={'pagination'}
               activeClassName={'active'}
               nextLabel=">"
@@ -159,7 +194,7 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding-bottom: 35rem;
+  padding-bottom: 1rem;
   & > * {
     width: 60rem;
   }

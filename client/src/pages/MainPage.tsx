@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { v4 as uuid4 } from 'uuid';
 import { styled } from 'styled-components';
@@ -9,27 +10,49 @@ import {
   highestLikeCurationAPI,
   recentlyRegisteredCurationAPI,
 } from '../api/mainPageApi';
+import { RootState } from '../store/store';
 import { ICurationResponseData } from '../types/main';
 import { ICuratorInfo } from '../types/user';
+import { images } from '../utils/importImgUrl';
 import SimpleSlider from '../components/slider/SimpleSlider';
 import MainCurationCard from '../components/cards/MainCurationCard';
+import CuratorCard from '../components/cards/CuratorCard';
 import Label from '../components/label/Label';
-import Footer from '../components/Footer/Footer';
 import ClockLoading from '../components/Loading/ClockLoading';
 import PencilButton from '../components/buttons/PencilButton';
+import Footer from '../components/Footer/Footer';
 
-import { images } from '../utils/importImgUrl';
-import CuratorCard from '../components/cards/CuratorCard';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store/store';
-
-const imgs = [
-  { id: 1, imgUrl: images.banner1 },
-  { id: 2, imgUrl: images.banner2 },
-  { id: 3, imgUrl: images.banner3 },
-  { id: 4, imgUrl: images.banner4 },
-  { id: 5, imgUrl: images.banner5 },
-  { id: 6, imgUrl: images.banner6 },
+const bannerData = [
+  {
+    id: 1,
+    imgUrl: images.banner1,
+    curationId: '19',
+  },
+  {
+    id: 2,
+    imgUrl: images.banner2,
+    curationId: '22',
+  },
+  {
+    id: 3,
+    imgUrl: images.banner3,
+    curationId: '46',
+  },
+  {
+    id: 4,
+    imgUrl: images.banner4,
+    curationId: '44',
+  },
+  {
+    id: 5,
+    imgUrl: images.banner5,
+    curationId: '41',
+  },
+  {
+    id: 6,
+    imgUrl: images.banner6,
+    curationId: '40',
+  },
 ];
 
 const loadingStyle = {
@@ -88,7 +111,7 @@ const MainPage = () => {
     <>
       <Container>
         <Banner>
-          <SimpleSlider imgs={imgs} />
+          <SimpleSlider data={bannerData} />
         </Banner>
         <Section>
           <Label type="title" content="Best 큐레이터" />
@@ -114,7 +137,7 @@ const MainPage = () => {
         <Section>
           <div>
             <Label type="title" content="Best 큐레이션" />
-            <Link to="/curation/best">
+            <Link to="/curation/best?page=1&size=9">
               <Label content="> 더 보기" />
             </Link>
           </div>
@@ -124,7 +147,7 @@ const MainPage = () => {
             ) : bestCurations?.length ? (
               bestCurations?.map(
                 ({ curator, curationId, emoji, title, content, memberId, curationLikeCount }) => (
-                  <li key={uuid4()}>
+                  <li key={curationId}>
                     <MainCurationCard
                       curator={curator}
                       curationId={curationId}
@@ -145,7 +168,7 @@ const MainPage = () => {
         <Section>
           <div>
             <Label type="title" content="New 큐레이션" />
-            <Link to="/curation/new">
+            <Link to="/curation/new?page=1&size=9">
               <Label content="> 더 보기" />
             </Link>
           </div>
@@ -155,7 +178,7 @@ const MainPage = () => {
             ) : newCurations?.length ? (
               newCurations?.map(
                 ({ curator, curationId, emoji, title, content, memberId, curationLikeCount }) => (
-                  <li key={uuid4()}>
+                  <li key={curationId}>
                     <MainCurationCard
                       curator={curator}
                       curationId={curationId}

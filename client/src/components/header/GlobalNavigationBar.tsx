@@ -1,6 +1,6 @@
 import { MouseEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import tw from 'twin.macro';
 import styled from 'styled-components';
 
@@ -21,6 +21,8 @@ enum SelectMenu {
 const GlobalNavigationBar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+
   const token = localStorage.getItem('Authorization');
   const { image } = useSelector((state: RootState) => state.user);
   const [selectMenu, setSelectMenu] = useState<SelectMenu>(SelectMenu.Home);
@@ -47,9 +49,14 @@ const GlobalNavigationBar = () => {
     return (
       <>
         {!token && (
-          <LoginButton onClick={handleLoginButtonClick} className="login-btn">
-            로그인
-          </LoginButton>
+          <>
+            <LoginButton className="login-btn" onClick={handleLoginButtonClick}>
+              로그인
+            </LoginButton>
+            <RegisterButton className="register-btn" onClick={() => navigate('/register')}>
+              회원가입
+            </RegisterButton>
+          </>
         )}
         {token && image && (
           <ProfileImg src={image} alt="user select image" onClick={handleIsDropMenuOpen} />
@@ -73,7 +80,10 @@ const GlobalNavigationBar = () => {
             dispatch(saveUserInfo(response.data));
           }
         })
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          console.error(err);
+          navigate('/');
+        });
     }
     categoryAPI()
       .then((response) => {
@@ -85,6 +95,20 @@ const GlobalNavigationBar = () => {
         console.error(error);
       });
   }, [token]);
+
+  useEffect(() => {
+    switch (location.pathname) {
+      case SelectMenu.Home:
+        setSelectMenu(SelectMenu.Home);
+        break;
+      case SelectMenu.Best:
+        setSelectMenu(SelectMenu.Best);
+        break;
+      case SelectMenu.New:
+        setSelectMenu(SelectMenu.New);
+        break;
+    }
+  }, [location]);
 
   return (
     <Container>
@@ -104,14 +128,14 @@ const GlobalNavigationBar = () => {
               onClick={handleSelectMenu}
               selectMenu={selectMenu === SelectMenu.Best}
             >
-              <Link to="/curation/best">Best 큐레이션</Link>
+              <Link to="/curation/best?page=1&size=9">Best 큐레이션</Link>
             </Menu>
             <Menu
               data-type={SelectMenu.New}
               onClick={handleSelectMenu}
               selectMenu={selectMenu === SelectMenu.New}
             >
-              <Link to="/curation/new">New 큐레이션</Link>
+              <Link to="/curation/new?page=1&size=9">New 큐레이션</Link>
             </Menu>
           </MenuWrap>
         </LeftMenuWrap>
@@ -190,6 +214,10 @@ const ProfileImg = tw.img`
 `;
 
 const LoginButton = tw.button`
+  text-[1.05rem]
+`;
+
+const RegisterButton = tw.button`
   text-[1.05rem]
 `;
 

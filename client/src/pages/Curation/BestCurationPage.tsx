@@ -1,6 +1,6 @@
 import ReactPaginate from 'react-paginate';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { styled } from 'styled-components';
 import tw from 'twin.macro';
 
@@ -13,7 +13,6 @@ import Button from '../../components/buttons/Button';
 import Footer from '../../components/Footer/Footer';
 import ClockLoading from '../../components/Loading/ClockLoading';
 import { customAlert } from '../../components/alert/sweetAlert';
-
 const loadingStyle = {
   width: '80vw',
   height: '15vh',
@@ -24,46 +23,65 @@ const loadingStyle = {
 
 const BestCurationPage = () => {
   const navigate = useNavigate();
+  const [searchParmas, setSearchParams] = useSearchParams();
+  const categoryParam = searchParmas.get('category');
+  const pageParm = searchParmas.get('page');
+
   const [bestCurations, setBestCurations] = useState<ICurationResponseData[] | null>(null);
-  const [page, setPage] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>((Number(pageParm) - 1) | 0);
   const [totalBestPage, setTotalBestPage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectCategory, setSelectCategory] = useState<number>(0);
+  const [selectCategory, setSelectCategory] = useState<number>(Number(categoryParam) | 0);
 
+  const [isAllBtnActive, setIsAllBtnActive] = useState(true);
   const itemsPerPage = 9;
 
-  const fetchBestCurationData = async () => {
-    setIsLoading(true);
-    const response = await LikedCurationAPI(page + 1, itemsPerPage);
-    if (!response?.data.data.length) {
-      setIsLoading(false);
-    } else {
-      setBestCurations(response.data.data);
-      setTotalBestPage(response.data.pageInfo.totalPages);
-      setIsLoading(false);
+  const handleGetBestCurations = async () => {
+    try {
+      setIsLoading(true);
+      const response = !categoryParam
+        ? await LikedCurationAPI(currentPage + 1, itemsPerPage)
+        : await LikedCurationCategoryAPI(currentPage + 1, itemsPerPage, selectCategory);
+      if (response) {
+        setBestCurations(response.data.data);
+        setTotalBestPage(response.data.pageInfo.totalPages);
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
-  const getBestCurationsByCategory = async (page: number, categoryId: number) => {
-    const response = await LikedCurationCategoryAPI(page + 1, itemsPerPage, categoryId);
-    if (!response?.data.data.length) {
-      setIsLoading(false);
-      setBestCurations(response?.data.data);
+
+  const handleAllCategory = () => {
+    setCurrentPage(0);
+    setSelectCategory(0);
+    setIsAllBtnActive(true);
+    navigate(`/curation/best?page=${currentPage + 1}&size=${itemsPerPage}`);
+  };
+
+  const handlePageChange = (selectedItem: { selected: number }) => {
+    const selectedPage = selectedItem.selected;
+    setCurrentPage(selectedPage);
+    if (categoryParam) {
+      setSearchParams({
+        category: String(selectCategory),
+        page: String(selectedItem.selected + 1),
+        size: '9',
+      });
     } else {
-      setBestCurations(response.data.data);
-      setTotalBestPage(response.data.pageInfo.totalPages);
-      setIsLoading(false);
+      setSearchParams({
+        page: String(selectedItem.selected + 1),
+        size: '9',
+      });
     }
-  };
-  const handleTagClick = (categoryId: number) => {
-    setPage(0);
-    getBestCurationsByCategory(page, categoryId);
-  };
-  const handlePageChange = (selectedPage: { selected: number }) => {
-    setPage(selectedPage.selected);
   };
 
   const handleSetSelectCategory = (selectedValue: number) => {
+    setCurrentPage(0);
+    setIsAllBtnActive(false);
     setSelectCategory(selectedValue);
+
+    navigate(`/curation/best?category=${selectedValue}&page=1&size=9`);
   };
 
   const handleCreateButtonClick = () => {
@@ -86,14 +104,34 @@ const BestCurationPage = () => {
   };
 
   useEffect(() => {
-    fetchBestCurationData();
-  }, [page]);
+    if (categoryParam) {
+      setIsAllBtnActive(false);
+      setSelectCategory(Number(categoryParam));
+    } else {
+      setIsAllBtnActive(true);
+      setSelectCategory(0);
+    }
+    handleGetBestCurations();
+  }, [currentPage, searchParmas]);
 
+  useEffect(() => {
+    setCurrentPage(Number(pageParm) - 1);
+  }, [pageParm]);
+
+  useEffect(() => {
+    handleGetBestCurations();
+  }, []);
   return (
     <>
       <Container>
         <TitleContainer>
-          <Label type="title" content="큐레이션 카테고리" />
+          <TitleDiv>
+            <Label type="title" content="큐레이션 카테고리" />
+            <AllBtn onClick={handleAllCategory} isActive={isAllBtnActive}>
+              전체 카테고리 보기
+            </AllBtn>
+          </TitleDiv>
+
           <CreateButton>
             <Button
               type="create"
@@ -103,7 +141,6 @@ const BestCurationPage = () => {
           </CreateButton>
         </TitleContainer>
         <CategoryTag
-          handleTagClick={handleTagClick}
           handleSetSelectCategory={handleSetSelectCategory}
           selectCategory={selectCategory}
         />
@@ -116,16 +153,16 @@ const BestCurationPage = () => {
               <ClockLoading color="#3173f6" style={{ ...loadingStyle }} />
             ) : (
               bestCurations?.map((e) => (
-                <Link key={e.curationId} to={`/curations/${e.curationId}`}>
-                  <CurationCard
-                    image={e.curator.image}
-                    emoji={e.emoji}
-                    title={e.title}
-                    content={e.content}
-                    curationLikeCount={e.curationLikeCount}
-                    memberNickname={e.curator.nickname}
-                  />
-                </Link>
+                <CurationCard
+                  key={e.curationId}
+                  curationId={e.curationId}
+                  image={e.curator.image}
+                  emoji={e.emoji}
+                  title={e.title}
+                  content={e.content}
+                  curationLikeCount={e.curationLikeCount}
+                  memberNickname={e.curator.nickname}
+                />
               ))
             )}
             {!isLoading && bestCurations && bestCurations.length === 0 && (
@@ -138,7 +175,7 @@ const BestCurationPage = () => {
             <ReactPaginate
               pageCount={totalBestPage}
               onPageChange={handlePageChange}
-              forcePage={page}
+              forcePage={currentPage}
               containerClassName={'pagination'}
               activeClassName={'active'}
               nextLabel=">"
@@ -157,7 +194,7 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding-bottom: 35rem;
+  padding-bottom: 1rem;
   & > * {
     width: 60rem;
   }
@@ -171,9 +208,23 @@ const TitleContainer = styled.div`
   margin: 0rem -1.2rem -3rem 3rem;
 `;
 
+export const TitleDiv = styled.div`
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+`;
+export const AllBtn = styled.div<{ isActive: boolean }>`
+  font-size: 1rem;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: ${({ isActive }) => (isActive ? '#3173f6' : 'inherit')};
+  font-weight: ${({ isActive }) => (isActive ? '800' : 'inherit')};
+  border-bottom: ${({ isActive }) => (isActive ? '3px solid #3173f6' : 'none')};
+`;
 const CreateButton = styled.div`
   width: 9.5rem;
   margin: 2rem 5rem;
+  cursor: pointer;
 `;
 
 const Section = tw.div`

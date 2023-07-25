@@ -14,6 +14,7 @@ import ProfileForm from '../../components/profiles/ProfileForm';
 import WrittenList from '../../components/profiles/WrittenList';
 import LikeList from '../../components/profiles/LikeList';
 import CuraotrList from '../../components/profiles/CuratorList';
+import Footer from '../../components/Footer/Footer';
 
 const MyPage = () => {
   const [selected, setSelected] = useState<number>(0);
@@ -21,60 +22,56 @@ const MyPage = () => {
   const location = useLocation();
 
   useEffect(() => {
-    switch (location.pathname) {
-      case '/mypage':
-        setSelected(0);
-        break;
-      case `/mypage/${RoutePath.MyWrittenPage}`:
-        setSelected(1);
-        break;
-      case `/mypage/${RoutePath.MyLikePage}`:
-        setSelected(2);
-        break;
-      case `/mypage/${RoutePath.MySubcriberPage}`:
-        setSelected(3);
-        break;
-      default:
-        break;
+    if (location.pathname.includes('written')) {
+      setSelected(1);
+    } else if (location.pathname.includes('like')) {
+      setSelected(2);
+    } else if (location.pathname.includes('subscribe')) {
+      setSelected(3);
+    } else {
+      setSelected(0);
     }
   }, [location.pathname]);
 
   return (
-    <MyPageContainer>
-      <ProfileInfo type={UserPageType.MYPAGE} />
-      <ProfileDetailContainer>
-        <ProfileAside>
-          <ul>
-            <Filter type={UserPageType.MYPAGE} selected={selected} setSelected={setSelected} />
-          </ul>
-        </ProfileAside>
-        <ProfileDetailMain>
-          <MainContainer>
-            <Routes>
-              <Route path={RoutePath.MyInfoUpdate} element={<ProfileForm />} />
-              <Route path={RoutePath.MyPageOut} element={<ProfileOut />} />
-              <Route
-                path={RoutePath.MyWrittenPage}
-                element={<WrittenList type={UserPageType.MYPAGE} />}
-              />
-              <Route
-                path={RoutePath.MyLikePage}
-                element={<LikeList type={UserPageType.MYPAGE} />}
-              />
-              <Route path={RoutePath.MySubcriberPage} element={<CuraotrList />} />
-            </Routes>
-          </MainContainer>
-        </ProfileDetailMain>
-      </ProfileDetailContainer>
-    </MyPageContainer>
+    <>
+      <MyPageContainer>
+        <ProfileInfo type={UserPageType.MYPAGE} />
+        <ProfileDetailContainer>
+          <ProfileAside>
+            <ul>
+              <Filter type={UserPageType.MYPAGE} selected={selected} setSelected={setSelected} />
+            </ul>
+          </ProfileAside>
+          <ProfileDetailMain>
+            <MainContainer>
+              <Routes>
+                <Route path={RoutePath.MyInfoUpdate} element={<ProfileForm />} />
+                <Route path={RoutePath.MyPageOut} element={<ProfileOut />} />
+                <Route
+                  path={RoutePath.MyWrittenPage}
+                  element={<WrittenList type={UserPageType.MYPAGE} />}
+                />
+                <Route
+                  path={RoutePath.MyLikePage}
+                  element={<LikeList type={UserPageType.MYPAGE} />}
+                />
+                <Route path={RoutePath.MySubcriberPage} element={<CuraotrList />} />
+              </Routes>
+            </MainContainer>
+          </ProfileDetailMain>
+        </ProfileDetailContainer>
+      </MyPageContainer>
+      <Footer />
+    </>
   );
 };
 
 const MyPageContainer = tw.div`
   w-full
+  min-h-[77vh]
   flex
   flex-col
-  justify-center
   items-center
   mb-[5rem]
   px-[15%]
@@ -82,12 +79,11 @@ const MyPageContainer = tw.div`
 `;
 export const ProfileDetailContainer = styled.section`
   ${tw`
-        w-full
-        flex
-        justify-center
-        mt-[3rem]
-
-    `}
+      w-full
+      flex
+      justify-center
+      mt-[3rem]
+  `}
   border-top: 0.08rem solid gray;
   padding-top: 4rem;
   @media (max-width: 1000px) {
@@ -120,8 +116,8 @@ export const ProfileDetailMain = styled.main`
   }
 `;
 export const MainContainer = tw.div`
-    [> label]:text-left
-    [> label]:mb-[0.3rem]
+  [> label]:text-left
+  [> label]:mb-[0.3rem]
 `;
 
 export default MyPage;
