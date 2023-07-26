@@ -201,23 +201,33 @@ const CurationDetailPage = () => {
   };
 
   const handleCommentRegister = async () => {
-    const data = {
-      content: replyValue,
-    };
-    const response = await postReplyAPI(Number(curationId), data);
-    if (response) {
-      const newReply = response.data;
-      dispatch(addReply(newReply));
-      setReplyValue('');
-      getReplies();
-    } else {
+    if (!replyValue.length) {
       customAlert({
-        title: '댓글 실패',
-        text: '댓글은 로그인 기능 이후 가능합니다.',
-        icon: 'error',
+        title: '내용을 입력해주세요.',
+        text: '내용입력을 필수로 해주셔야 등록이 가능합니다!',
+        icon: 'warning',
         confirmButtonText: '확인',
-        confirmButtonColor: '#d33',
+        confirmButtonColor: '#eba430',
       });
+    } else {
+      const data = {
+        content: replyValue,
+      };
+      const response = await postReplyAPI(Number(curationId), data);
+      if (response) {
+        const newReply = response.data;
+        dispatch(addReply(newReply));
+        setReplyValue('');
+        getReplies();
+      } else {
+        customAlert({
+          title: '댓글 실패',
+          text: '댓글은 로그인 기능 이후 가능합니다.',
+          icon: 'error',
+          confirmButtonText: '확인',
+          confirmButtonColor: '#d33',
+        });
+      }
     }
   };
 
@@ -354,7 +364,7 @@ const CurationDetailPage = () => {
                   <CurationCreatedDate createdAt={curation.createdAt} />
                 </DetailInfoRight>
               </GridContainer>
-              <ContentContainer>
+              <ContentContainer className="content-container">
                 <div dangerouslySetInnerHTML={{ __html: `${curation.content}` }} />
               </ContentContainer>
 
@@ -391,7 +401,7 @@ const CurationDetailPage = () => {
                   replies?.map((e, idx: number) => {
                     const isEditing = editingIndexes[idx];
                     return (
-                      <ReplyContainer key={idx}>
+                      <ReplyContainer key={idx} className="reply-container">
                         {isEditing ? (
                           <EditContainer key={`edit ${idx}`}>
                             <UserInfo>
@@ -438,7 +448,7 @@ const CurationDetailPage = () => {
                     );
                   })
                 ) : (
-                  <Comment>아직 댓글이 없어요.😂</Comment>
+                  <Comment className="reply-container">첫 댓글의 큐레이터가 되어 주세요 😊</Comment>
                 )}
               </ItemContainer>
 
@@ -480,14 +490,13 @@ const FormContainer = styled.div`
   background-color: #ffffff;
   border-radius: 1rem;
   padding: 0rem 3rem 2rem 3rem;
-  width: 80rem;
+  width: 60rem;
   margin-bottom: 8rem;
 `;
 
 const TitleContainer = styled.div`
   display: flex;
   align-items: center;
-  /* justify-content: space-between; */
   flex-direction: row;
   margin: 4rem 0rem 2rem 0rem;
   text-align: left;
@@ -559,8 +568,8 @@ const DetailInfoRight = styled.div`
 const ContentContainer = styled.div`
   margin: 3rem 0rem;
   text-align: left;
-  font-size: 1.2rem;
-  line-height: 2rem;
+  font-size: 1rem;
+  line-height: 1.7rem;
   img {
     max-width: 100%;
     height: auto;
@@ -577,6 +586,7 @@ const ItemContainer = tw.div`
   [> label]:mb-4 
   [> button]:mb-3
 `;
+
 const UserInfo = tw.div`
     flex
     items-center
@@ -593,10 +603,12 @@ const ProfileImage = tw.div`
   justify-center
   border-solid border-[1px] border-gray-300
 `;
+
 const DefaultImg = styled.img`
   height: inherit;
   object-fit: cover;
 `;
+
 const CommentContainer = styled.div`
   width: 100%;
   margin: 0.4rem 0rem;
@@ -652,10 +664,12 @@ const ButtonZone = styled.div`
   justify-content: flex-end;
   margin-top: 1rem;
 `;
+
 const Nickname = tw.p`
     text-xl
     font-thin
 `;
+
 const Valid = tw.div`
     text-red-500
     pt-[0.5rem]
@@ -663,6 +677,7 @@ const Valid = tw.div`
     text-[0.7rem]
     font-semibold
 `;
+
 const ReplyContainer = tw.div``;
 
 const RepliesTitle = tw.label`

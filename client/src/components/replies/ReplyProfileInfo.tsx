@@ -6,6 +6,9 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { HiPencil } from 'react-icons/hi';
 import { HiTrash } from 'react-icons/hi';
+import { useNavigate } from 'react-router-dom';
+import { itemsPerSize } from '../../types';
+
 interface ReplyProfileInfoProp {
   replierId: number;
   replyId: number;
@@ -25,22 +28,30 @@ const ReplyProfileInfo = ({
   handleCommentDelete,
 }: ReplyProfileInfoProp) => {
   const { memberId } = useSelector((state: RootState) => state.user);
+  const navigate = useNavigate();
+  const handleClick = () => {
+    if (memberId === replierId) {
+      navigate(`/mypage`);
+    } else {
+      navigate(`/userpage/${replierId}/written?page=1&size=${itemsPerSize}`);
+    }
+  };
   return (
     <ProfileInfoContainer>
       <UserInfo>
         <ProfileImage>
           <DefaultImg src={imageUrl || ProfileImg} alt="profileImg" />
         </ProfileImage>
-        <Nickname>{nickname}</Nickname>
+        <Nickname onClick={handleClick}>{nickname}</Nickname>
       </UserInfo>
       <ButtonZone>
         {memberId === replierId && (
           <>
             <EditButton onClick={() => handleCommentEdit(content)}>
-              <HiPencil size="1.5rem" />
+              <HiPencil size="1.3rem" />
             </EditButton>
             <DelteButton onClick={() => handleCommentDelete(replyId)}>
-              <HiTrash size="1.5rem" />
+              <HiTrash size="1.3rem" />
             </DelteButton>
           </>
         )}
@@ -78,9 +89,9 @@ const DefaultImg = styled.img`
 `;
 
 const Nickname = tw.p`
-    text-xl
+    text-lg
     font-thin
-    
+    cursor-pointer
 `;
 const ButtonZone = tw.div`
     flex
